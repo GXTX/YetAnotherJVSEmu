@@ -19,6 +19,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#define DEBUG_SERIAL
+
 #include "SerIo.h"
 
 SerIo::SerIo(char *devicePath)
@@ -77,7 +79,7 @@ int SerIo::Read(std::vector<uint8_t> &buffer)
 	// TODO: causing "high" cpu load
 	int bytes = sp_input_waiting(Port);
 
-	if (bytes <= 0) {
+	if (bytes < 5) {
 		// TODO: this doesn't have to mean a readerror, could just be a zero size waiting
 		return StatusCode::ReadError;
 	}
@@ -86,18 +88,17 @@ int SerIo::Read(std::vector<uint8_t> &buffer)
 
 	int ret = sp_nonblocking_read(Port, buffer.data(), buffer.size());
 
-	if (ret <= 4) {
+	if (ret < 5) {
 		return StatusCode::ReadError;
 	}
-	else {
-		#ifdef DEBUG_SERIAL
-		std::cout << "SerIo::Read:";
-		for (size_t i = 0; i < buffer.size(); i++) {
-			std::printf(" %02X", buffer.at(i));
-		}
-		std::cout << std::endl;
-		#endif
+
+	#ifdef DEBUG_SERIAL
+	std::cout << "SerIo::Read:";
+	for (size_t i = 0; i < buffer.size(); i++) {
+		std::printf(" %02X", buffer.at(i));
 	}
+	std::cout << std::endl;
+	#endif
 
 	return StatusCode::Okay;
 }
