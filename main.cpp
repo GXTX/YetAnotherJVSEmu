@@ -136,8 +136,9 @@ std::cout << "Debug - ";
 
 				if (jvs_ret > 0) {
 					SerialHandler->Write(SerialBuffer);
-					usleep(50);
+
 					if(JVSHandler->pSenseChange){
+						std::this_thread::sleep_for(std::chrono::microseconds(50));
 						if(JVSHandler->pSense == JvsIo::SenseStates::NotConnected) {
 							GPIOHandler->SetMode(GpIo::PinMode::In);
 						}
@@ -154,7 +155,7 @@ std::cout << "Debug - ";
 
 		// NOTE: This is a workaround for Crazy Taxi - High Roller on Chihiro
 		// Without this the Chihiro will crash (likely) or stop sending packets to us (less likely).
-		std::this_thread::sleep_for(std::chrono::microseconds(500));
+		std::this_thread::sleep_for(std::chrono::microseconds(250));
 	}
 
 	std::cout << std::endl;

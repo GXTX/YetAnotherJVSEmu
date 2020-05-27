@@ -393,7 +393,7 @@ void JvsIo::HandlePacket(jvs_packet_header_t* header, std::vector<uint8_t>& pack
 			case 0x12: i += Jvs_Command_12_GetJvsRevision(); break;
 			case 0x13: i += Jvs_Command_13_GetCommunicationVersion(); break;
 			case 0x14: i += Jvs_Command_14_GetCapabilities(); break;
-			//case 0x15: i += Jvs_Command_15_ConveyId(command_data); break;
+			case 0x15: i += Jvs_Command_15_ConveyId(command_data); break;
 			case 0x20: i += Jvs_Command_20_ReadSwitchInputs(command_data); break;
 			case 0x21: i += Jvs_Command_21_ReadCoinInputs(command_data); break;
 			case 0x22: i += Jvs_Command_22_ReadAnalogInputs(command_data); break;
@@ -401,7 +401,7 @@ void JvsIo::HandlePacket(jvs_packet_header_t* header, std::vector<uint8_t>& pack
 			case 0x26: i += Jvs_Command_26_ReadGeneralSwitchInputs(command_data); break;
 			case 0x30: i += Jvs_Command_30_CoinSubtractionOutput(command_data); break;
 			case 0x32: i += Jvs_Command_32_GeneralPurposeOutput(command_data); break;
-			//case 0x35: i += Jvs_Command_35_CoinAdditionOutput(command_data); break;
+			case 0x35: i += Jvs_Command_35_CoinAdditionOutput(command_data); break;
 			default:
 				// Overwrite the verly-optimistic StatusCode::StatusOkay with Status::Unsupported command
 				// Don't process any further commands. Existing processed commands must still return their responses.
