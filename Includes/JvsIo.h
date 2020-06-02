@@ -207,8 +207,8 @@ private:
 	const uint8_t TARGET_MASTER_DEVICE = 0x00;
 	const uint8_t TARGET_BROADCAST = 0xFF;	
 
-	uint8_t GetByte(std::vector<uint8_t> &buffer);
-	uint8_t GetEscapedByte(std::vector<uint8_t> &buffer);
+	uint8_t GetByte(std::vector<uint8_t> &buffer, int &buffer_position);
+	uint8_t GetEscapedByte(std::vector<uint8_t> &buffer, int &buffer_position);
 	void HandlePacket(jvs_packet_header_t* header, std::vector<uint8_t>& packet);
 
 	void SendByte(std::vector<uint8_t> &buffer, uint8_t value);

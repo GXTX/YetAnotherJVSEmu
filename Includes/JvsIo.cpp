@@ -27,7 +27,7 @@
 
 #include "JvsIo.h"
 
-//#define DEBUG_JVS_PACKETS
+#define DEBUG_JVS_PACKETS
 
 // We will emulate SEGA 837-13551 IO Board
 JvsIo::JvsIo(SenseStates sense)
@@ -350,10 +350,10 @@ int JvsIo::Jvs_Command_35_CoinAdditionOutput(uint8_t* data)
 	return 3;
 }
 
-uint8_t JvsIo::GetByte(std::vector<uint8_t> &buffer)
+uint8_t JvsIo::GetByte(std::vector<uint8_t> &buffer, int &buffer_position)
 {
-	uint8_t value = buffer.at(0);
-	buffer.erase(buffer.begin());
+	uint8_t value = buffer.at(buffer_position);
+	buffer_position++;
 
 #ifdef DEBUG_JVS_PACKETS
 	std::printf(" %02X", value);
@@ -361,13 +361,13 @@ uint8_t JvsIo::GetByte(std::vector<uint8_t> &buffer)
 	return value;
 }
 
-uint8_t JvsIo::GetEscapedByte(std::vector<uint8_t> &buffer)
+uint8_t JvsIo::GetEscapedByte(std::vector<uint8_t> &buffer, int &buffer_position)
 {
-	uint8_t value = GetByte(buffer);
+	uint8_t value = GetByte(buffer, buffer_position);
 
 	// Special case: 0xD0 is an exception byte that actually returns the next byte + 1
 	if (value == ESCAPE_BYTE) {
-		value = GetByte(buffer) + 1;
+		value = GetByte(buffer, buffer_position) + 1;
 	}
 
 	return value;
@@ -415,6 +415,9 @@ void JvsIo::HandlePacket(jvs_packet_header_t* header, std::vector<uint8_t>& pack
 
 size_t JvsIo::ReceivePacket(std::vector<uint8_t> &buffer)
 {
+	// vector location
+	int buffer_position = 0;
+
 	// Scan the packet header
 	jvs_packet_header_t header;
 
@@ -422,7 +425,7 @@ size_t JvsIo::ReceivePacket(std::vector<uint8_t> &buffer)
 #ifdef DEBUG_JVS_PACKETS
 	std::cout << "JvsIo::ReceivePacket:";
 #endif
-	header.sync = GetByte(buffer); // Do not unescape the sync-byte!
+	header.sync = GetByte(buffer, buffer_position); // Do not unescape the sync-byte!
 	if (header.sync != SYNC_BYTE) {
 #ifdef DEBUG_JVS_PACKETS
 		std::cout << " [Missing SYNC_BYTE!]" << std::endl;
@@ -432,8 +435,12 @@ size_t JvsIo::ReceivePacket(std::vector<uint8_t> &buffer)
 	}
 
 	// Read the target and count bytes
-	header.target = GetEscapedByte(buffer);
-	header.count = GetEscapedByte(buffer);
+	header.target = GetEscapedByte(buffer, buffer_position);
+	header.count = GetEscapedByte(buffer, buffer_position);
+
+	if (header.count != buffer.size() - 3) {
+		return 1;
+	}
 
 	// Calculate the checksum
 	uint8_t actual_checksum = header.target + header.count;
@@ -442,13 +449,13 @@ size_t JvsIo::ReceivePacket(std::vector<uint8_t> &buffer)
 	// TODO: don't put in another vector just to send off
 	std::vector<uint8_t> packet;
 	for (int i = 0; i < header.count - 1; i++) { // Note : -1 to avoid adding the checksum byte to the packet
-		uint8_t value = GetEscapedByte(buffer);
+		uint8_t value = GetEscapedByte(buffer, buffer_position);
 		packet.push_back(value);
 		actual_checksum += value;
 	}
 
 	// Read the checksum from the last byte
-	uint8_t packet_checksum = GetEscapedByte(buffer);
+	uint8_t packet_checksum = GetEscapedByte(buffer, buffer_position);
 #ifdef DEBUG_JVS_PACKETS
 	std::cout << std::endl;
 #endif

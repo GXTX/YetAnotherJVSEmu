@@ -92,6 +92,9 @@ std::cout << "Debug - ";
 	std::vector<uint8_t> SerialBuffer;
 	SerialBuffer.reserve(255 * 2); //max JVS packet * 2
 
+	std::vector<uint8_t> ReadBuffer;
+	ReadBuffer.reserve(255 * 2);
+
 	std::unique_ptr<GpIo> GPIOHandler (std::make_unique<GpIo>(GpIo::SenseType::Float));
 	if (!GPIOHandler->IsInitialized) {
 		std::cerr << "Couldn't initiate GPIO and \"NONE\" wasn't explicitly set." << std::endl;
@@ -128,7 +131,12 @@ std::cout << "Debug - ";
 		jvs_ret = SerialHandler->Read(SerialBuffer);
 
 		if (jvs_ret == SerIo::StatusCode::Okay) {
-			jvs_ret = JVSHandler->ReceivePacket(SerialBuffer);
+
+			for (uint8_t i : SerialBuffer) {
+				ReadBuffer.push_back(i);
+			}
+
+			jvs_ret = JVSHandler->ReceivePacket(ReadBuffer);
 
 			if (jvs_ret > 1) {
 				SerialBuffer.clear();
@@ -150,12 +158,11 @@ std::cout << "Debug - ";
 					}
 				}
 			}
-			SerialBuffer.clear();
 		}
 
 		// NOTE: This is a workaround for Crazy Taxi - High Roller on Chihiro
 		// Without this the Chihiro will crash (likely) or stop sending packets to us (less likely).
-		std::this_thread::sleep_for(std::chrono::microseconds(250));
+		std::this_thread::sleep_for(std::chrono::microseconds(150));
 	}
 
 	std::cout << std::endl;
